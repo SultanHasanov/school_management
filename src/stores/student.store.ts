@@ -207,15 +207,17 @@ class StudentStore {
     }
   }
 
-  getStudentWithClass(student: Student): Student & { class?: Class } {
-    const classInfo = classStore.classes.find(
-      (cls) => cls.id === student.class_id.toString()
-    );
-    return {
-      ...student,
-      class: classInfo,
-    };
-  }
+getStudentWithClass(student: Student): Student & { class?: Class } {
+  const classInfo = classStore.classes.find(
+    (cls) => Number(cls.id) === student.class_id
+  );
+  return {
+    ...student,
+    class: classInfo,
+  };
+}
+
+
 
   get studentsWithClasses(): (Student & { class?: Class })[] {
     return this.students.map((student) => this.getStudentWithClass(student));

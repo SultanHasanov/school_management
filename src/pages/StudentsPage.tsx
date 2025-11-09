@@ -28,7 +28,7 @@ interface StudentWithClass extends Student {
     name: string;
     grade: number;
     academic_year: string;
-  };
+  }| string;
 }
 
 interface ColumnSettings {
@@ -197,16 +197,18 @@ export const StudentsPage = observer(() => {
       sorter: (a, b) => a.full_name.localeCompare(b.full_name),
     },
     {
-      title: "Класс",
-      dataIndex: "class_id",
-      key: "class_id",
-      render: (_, record) =>
-        record.class ? (
-          <Tag color="blue">{record.class.name}</Tag>
-        ) : (
-          <Tag>Не указан</Tag>
-        ),
-    },
+  title: "Класс",
+  dataIndex: "class",
+  key: "class_id",
+  render: (_, record) => {
+    // Если class - строка, используем её, иначе берем name из объекта
+    const classLabel =
+      typeof record.class === "string" ? record.class : record.class?.name;
+
+    return <Tag color="blue">{classLabel || "Не указан"}</Tag>;
+  },
+}
+,
     {
       title: "Телефон",
       dataIndex: "phone",
