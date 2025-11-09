@@ -9,18 +9,19 @@ export const LoginPage = observer(() => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const onFinish = async (values: { email: string; password: string }) => {
-    setLoading(true);
-    try {
-      await authStore.login(values);
-      message.success('Вход выполнен успешно');
-      navigate('/', { replace: true });
-    } catch (err) {
-      message.error(authStore.error || 'Неверный логин или пароль');
-    } finally {
-      setLoading(false);
-    }
-  };
+const onFinish = async (values: { email: string; password: string }) => {
+  setLoading(true);
+  try {
+    await authStore.login(values);
+    message.success('Вход выполнен успешно');
+    navigate('/', { replace: true });
+  } catch (err) {
+    message.error(authStore.error || 'Неверный логин или пароль');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
