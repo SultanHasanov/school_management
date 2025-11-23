@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { message } from 'antd';
-
+import { authStore } from './auth.store';
 export interface Teacher {
   id: number;
   category?: string;
@@ -53,35 +53,24 @@ class TeachersStore {
   searchText = '';
   selectedSubject: string | null = null;
   currentFilters: TeacherFilters = {}; // Добавь это
-  private authToken: string | null = null;
 
   constructor() {
     makeAutoObservable(this);
-    this.loadToken();
   }
 
-  // Загрузка токена из localStorage
-  private loadToken() {
-    this.authToken = localStorage.getItem('token')
-  }
 
-  // Установка токена
-  setToken(token: string) {
-    this.authToken = token;
-  }
-
-  // Получение заголовков с авторизацией
-  private getHeaders(): HeadersInit {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-
-    if (this.authToken) {
-      headers['Authorization'] = `Bearer ${this.authToken}`;
+  private getAuthHeaders(): HeadersInit {
+    const token = authStore.token;
+    if (!token) {
+      throw new Error("No authentication token");
     }
 
-    return headers;
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
   }
+
 
   // Загрузка учителей с API
  async loadTeachers(filters: TeacherFilters = {}) {
@@ -104,7 +93,7 @@ class TeachersStore {
 
       const response = await fetch(url, {
         method: "GET",
-        headers: this.getHeaders(),
+        headers: this.getAuthHeaders(), 
       });
 
       if (!response.ok) {
@@ -140,12 +129,10 @@ class TeachersStore {
     try {
       const formData = new FormData();
       formData.append('file', file);
-
+  const headers = this.getAuthHeaders();
       const response = await fetch('https://api.achkhoy-obr.ru/staff/import', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.authToken}`,
-        },
+         headers: headers,
         body: formData,
       });
 
@@ -182,7 +169,7 @@ class TeachersStore {
 
       const response = await fetch('https://api.achkhoy-obr.ru/staff', {
         method: 'POST',
-        headers: this.getHeaders(),
+        headers: this.getAuthHeaders(),
         body: JSON.stringify(newTeacher),
       });
 
@@ -214,7 +201,7 @@ class TeachersStore {
     try {
       const response = await fetch(`https://api.achkhoy-obr.ru/staff/${id}`, {
         method: 'PUT',
-        headers: this.getHeaders(),
+        headers: this.getAuthHeaders(),
         body: JSON.stringify(teacherData),
       });
 
@@ -249,7 +236,7 @@ class TeachersStore {
     try {
       const response = await fetch(`https://api.achkhoy-obr.ru/staff/${id}`, {
         method: 'DELETE',
-        headers: this.getHeaders(),
+        headers: this.getAuthHeaders(),
       });
 
       if (!response.ok) {
