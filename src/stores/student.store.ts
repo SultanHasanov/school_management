@@ -24,6 +24,17 @@ interface CreateStudentData {
   note?: string;
   phone?: string;
   school_id?: number;
+   class: string;
+}
+
+export interface StudentFilters {
+  full_name?: string;
+  gender?: string;
+  class_id?: number;
+  grade_from?: number;
+  grade_to?: number;
+  age_from?: number;
+  age_to?: number;
 }
 
 interface UpdateStudentData extends Partial<CreateStudentData> {
@@ -51,23 +62,35 @@ class StudentStore {
     };
   }
 
-  *fetchStudents() {
+  currentFilters: StudentFilters = {};
+
+  *fetchStudents(filters: StudentFilters = {}) {
     this.isLoading = true;
     this.error = null;
+    this.currentFilters = filters; // сохраняем фильтры
 
     try {
-      // Сначала загружаем классы, если они еще не загружены
       if (classStore.classes.length === 0) {
         yield classStore.fetchClasses();
       }
 
-      const response: Response = yield fetch(
-        "https://api.achkhoy-obr.ru/students",
-        {
-          method: "GET",
-          headers: this.getAuthHeaders(),
+      // Собираем параметры запроса
+      const queryParams = new URLSearchParams();
+      
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, value.toString());
         }
-      );
+      });
+
+      const url = `https://api.achkhoy-obr.ru/students${
+        queryParams.toString() ? `?${queryParams.toString()}` : ''
+      }`;
+
+      const response: Response = yield fetch(url, {
+        method: "GET",
+        headers: this.getAuthHeaders(),
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -90,6 +113,12 @@ class StudentStore {
       });
     }
   }
+
+  // Добавь метод для очистки фильтров
+  clearFilters() {
+    this.currentFilters = {};
+  }
+  
 
   *createStudent(studentData: CreateStudentData) {
     this.isLoading = true;

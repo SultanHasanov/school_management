@@ -195,9 +195,9 @@ export const ClassesPage = observer(() => {
             onConfirm={() => handleDelete(record.id)}
             okText="Да"
             cancelText="Нет"
-             overlayStyle={{
-    position: 'fixed' // предотвращает прыжки
-  }}
+            overlayStyle={{
+              position: "fixed", // предотвращает прыжки
+            }}
           >
             <Button type="text" danger icon={<Trash2 size={16} />} />
           </Popconfirm>
@@ -260,17 +260,19 @@ export const ClassesPage = observer(() => {
     <div>
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">Классы</h1>
-        <Space>
-          <Button
-            type="primary"
-            icon={<Plus size={18} />}
-            onClick={handleAdd}
-            size="large"
-            loading={classStore.isLoading}
-          >
-            Добавить класс
-          </Button>
-        </Space>
+        {localStorage.getItem("role") !== "roo" && (
+          <Space>
+            <Button
+              type="primary"
+              icon={<Plus size={18} />}
+              onClick={handleAdd}
+              size="large"
+              loading={classStore.isLoading}
+            >
+              Добавить класс
+            </Button>
+          </Space>
+        )}
       </div>
 
       <div className="mb-4 space-y-3 md:space-y-0 md:flex md:gap-4">

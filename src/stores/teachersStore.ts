@@ -30,11 +30,29 @@ export interface TeacherFormData {
   work_start?: string;
 }
 
+export interface TeacherFilters {
+  full_name?: string;
+  phone?: string;
+  position?: string;
+  subject?: string;
+  education?: string;
+  category?: string;
+  ped_experience?: number;
+  total_experience?: number;
+}
+
+interface ImportResponse {
+  message?: string;
+  imported?: number;
+  success?: boolean;
+}
+
 class TeachersStore {
-  teachers: Teacher[] = [];
+ teachers: Teacher[] = [];
   loading = false;
   searchText = '';
   selectedSubject: string | null = null;
+  currentFilters: TeacherFilters = {}; // Добавь это
   private authToken: string | null = null;
 
   constructor() {
@@ -66,11 +84,26 @@ class TeachersStore {
   }
 
   // Загрузка учителей с API
-  async loadTeachers() {
+ async loadTeachers(filters: TeacherFilters = {}) {
     this.loading = true;
+    this.currentFilters = filters; // сохраняем фильтры
+
     try {
-      const response = await fetch('https://api.achkhoy-obr.ru/staff', {
-        method: 'GET',
+      // Собираем параметры запроса
+      const queryParams = new URLSearchParams();
+      
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, value.toString());
+        }
+      });
+
+      const url = `https://api.achkhoy-obr.ru/staff${
+        queryParams.toString() ? `?${queryParams.toString()}` : ''
+      }`;
+
+      const response = await fetch(url, {
+        method: "GET",
         headers: this.getHeaders(),
       });
 
@@ -93,6 +126,47 @@ class TeachersStore {
       const errorMessage = error instanceof Error ? error.message : 'Ошибка загрузки учителей';
       message.error(errorMessage);
       console.error('Error loading teachers:', error);
+    }
+  }
+
+  // Добавь метод для очистки фильтров
+  clearFilters() {
+    this.currentFilters = {};
+  }
+
+  // Импорт учителей из файла
+  async importTeachers(file: File): Promise<ImportResponse> {
+    this.loading = true;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('https://api.achkhoy-obr.ru/staff/import', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.authToken}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result: ImportResponse = await response.json();
+      
+      // Обновляем список учителей после импорта
+      await this.loadTeachers();
+      
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to import teachers';
+      message.error(errorMessage);
+      throw error;
+    } finally {
+      runInAction(() => {
+        this.loading = false;
+      });
     }
   }
 
